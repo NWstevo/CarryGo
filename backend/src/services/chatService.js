@@ -1,31 +1,54 @@
 const pool = require('../config/db');
 
-const createChatForDeal = async ({ deal_id }) => {
-  const dealResult = await pool.query(
-    'SELECT * FROM deals WHERE id = $1',
-    [deal_id]
+const createChatFromConnection = async ({ connection_id, current_user_id }) => {
+  const connectionResult = await pool.query(
+    'SELECT * FROM connections WHERE id = $1',
+    [connection_id]
   );
 
-  const deal = dealResult.rows[0];
+  const connection = connectionResult.rows[0];
 
-  if (!deal) {
-    throw new Error('Deal not found');
+  if (!connection) {
+    throw new Error('Connection not found');
+  }
+
+  const isParticipant =
+    connection.initiator_id === current_user_id ||
+    connection.receiver_id === current_user_id;
+
+  if (!isParticipant) {
+    throw new Error('You are not allowed to create a chat for this connection');
+  }
+
+  if (connection.status !== 'accepted') {
+    throw new Error('Chat can only be created from an accepted connection');
   }
 
   const existingChat = await pool.query(
-    'SELECT * FROM chats WHERE deal_id = $1',
-    [deal_id]
+    'SELECT * FROM chats WHERE connection_id = $1',
+    [connection_id]
   );
 
   if (existingChat.rows.length > 0) {
     return existingChat.rows[0];
   }
 
+  let traveler_id;
+  let sender_id;
+
+  if (connection.initiator_role === 'traveler') {
+    traveler_id = connection.initiator_id;
+    sender_id = connection.receiver_id;
+  } else {
+    traveler_id = connection.receiver_id;
+    sender_id = connection.initiator_id;
+  }
+
   const result = await pool.query(
-    `INSERT INTO chats (deal_id, traveler_id, sender_id)
+    `INSERT INTO chats (connection_id, traveler_id, sender_id)
      VALUES ($1, $2, $3)
      RETURNING *`,
-    [deal_id, deal.traveler_id, deal.sender_id]
+    [connection_id, traveler_id, sender_id]
   );
 
   return result.rows[0];
@@ -92,7 +115,7 @@ const getMessages = async ({ chat_id, current_user_id }) => {
 };
 
 module.exports = {
-  createChatForDeal,
+  createChatFromConnection,
   sendMessage,
   getMessages,
 };

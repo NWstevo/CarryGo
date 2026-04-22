@@ -3,8 +3,7 @@ const dealService = require('../services/dealService');
 const createDeal = async (req, res, next) => {
   try {
     const deal = await dealService.createDeal({
-      trip_id: req.body.trip_id,
-      request_id: req.body.request_id,
+      connection_id: req.body.connection_id,
       current_user_id: req.user.id,
     });
 
@@ -22,6 +21,7 @@ const getDeals = async (req, res, next) => {
     next(error);
   }
 };
+
 const updateDealStatus = async (req, res, next) => {
   try {
     const deal = await dealService.updateDealStatus({
@@ -35,4 +35,9 @@ const updateDealStatus = async (req, res, next) => {
     next(error);
   }
 };
-module.exports = { createDeal, getDeals, updateDealStatus };
+
+module.exports = {
+  createDeal,
+  getDeals,
+  updateDealStatus,
+};

@@ -102,14 +102,10 @@ const validateRequest = (req, res, next) => {
   next();
 };
 const validateDeal = (req, res, next) => {
-  const { trip_id, request_id } = req.body;
+  const { connection_id } = req.body;
 
-  if (!trip_id || trip_id.trim() === '') {
-    return res.status(400).json({ message: 'Trip ID is required' });
-  }
-
-  if (!request_id || request_id.trim() === '') {
-    return res.status(400).json({ message: 'Request ID is required' });
+  if (!connection_id || connection_id.trim() === '') {
+    return res.status(400).json({ message: 'Connection ID is required' });
   }
 
   next();

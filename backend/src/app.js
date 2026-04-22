@@ -13,6 +13,7 @@ const errorHandler = require('./middleware/errorMiddleware');
 const dealRoutes = require('./routes/dealRoutes');
 const app = express();
 const chatRoutes = require('./routes/chatRoutes');
+const connectionRoutes = require('./routes/connectionRoutes');
 
 app.use(cors());
 app.use(express.json());
@@ -23,7 +24,7 @@ app.use('/api/trips', tripRoutes);
 app.use('/api/requests', requestRoutes);
 app.use('/api/deals', dealRoutes);
 app.use('/api/chats', chatRoutes);
-
+app.use('/api/connections', connectionRoutes);
 
 
 

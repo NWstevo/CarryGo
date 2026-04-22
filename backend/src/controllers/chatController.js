@@ -1,9 +1,10 @@
 const chatService = require('../services/chatService');
 
-const createChatForDeal = async (req, res, next) => {
+const createChatFromConnection = async (req, res, next) => {
   try {
-    const chat = await chatService.createChatForDeal({
-      deal_id: req.body.deal_id,
+    const chat = await chatService.createChatFromConnection({
+      connection_id: req.body.connection_id,
+      current_user_id: req.user.id,
     });
 
     res.status(201).json(chat);
@@ -40,7 +41,7 @@ const getMessages = async (req, res, next) => {
 };
 
 module.exports = {
-  createChatForDeal,
+  createChatFromConnection,
   sendMessage,
   getMessages,
 };
