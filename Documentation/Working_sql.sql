@@ -102,6 +102,35 @@ FOR EACH ROW
 EXECUTE FUNCTION update_updated_at_column();
 )
 
+--linking deals to connections
+ALTER TABLE deals
+ADD COLUMN connection_id UUID REFERENCES connections(id) ON DELETE CASCADE;
+
+-- preventing duplicate deals from the same connection
+CREATE UNIQUE INDEX unique_deal_per_connection
+ON deals (connection_id)
+WHERE connection_id IS NOT NULL;
+
+-- no more use of trip and request ids
+ALTER TABLE deals
+ALTER COLUMN trip_id DROP NOT NULL;
+
+ALTER TABLE deals
+ALTER COLUMN request_id DROP NOT NULL;
+
+-- constraints to ensure that there are no invalid deals
+ALTER TABLE deals
+ADD CONSTRAINT deals_listing_reference_check
+CHECK (
+  trip_id IS NOT NULL OR request_id IS NOT NULL
+);
+
+
+
+
+
+
+
 
 
 
@@ -149,6 +178,22 @@ CREATE TRIGGER set_messages_updated_at
 BEFORE UPDATE ON messages
 FOR EACH ROW
 EXECUTE FUNCTION update_updated_at_column();
+
+--Ensuring that messages can be text or images
+
+
+ALTER TABLE messages
+ADD COLUMN file_url TEXT;
+
+-- constraint to ensure empty messages can't be sent
+
+ALTER TABLE messages
+ADD CONSTRAINT message_content_or_file_check
+CHECK (
+  content IS NOT NULL OR file_url IS NOT NULL
+);
+
+
 
 SELECT * from trips
 
@@ -202,10 +247,47 @@ CREATE UNIQUE INDEX unique_request_connection_per_traveler
 ON connections (request_id, initiator_id)
 WHERE request_id IS NOT NULL;
 
+-- updating connection statuse
+ALTER TABLE connections
+ADD CONSTRAINT connections_status_check
+CHECK (
+  status IN (
+    'pending',
+    'accepted',
+    'rejected',
+    'cancelled',
+    'cancelled_due_to_listing_closure'
+  )
+);
+
+-- tying chats to connections 
+
+
+ALTER TABLE chats
+ADD COLUMN connection_id UUID UNIQUE REFERENCES connections(id) ON DELETE CASCADE;
+
+ALTER TABLE chats
+ALTER COLUMN deal_id DROP NOT NULL;
+
+
+
+
+select * from trips
 
 --- ENDED ON STATUSES
 
+
+-- User 1
 --BearerId Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjUyMjI5YjczLWMyMGYtNDFmZS1hNGE2LWFiYWNmOTk4MzQ3MCIsImVtYWlsIjoic3RlcGhlbkBleGFtcGxlLmNvbSIsImlhdCI6MTc3Njc4MzcyNywiZXhwIjoxNzc3Mzg4NTI3fQ.SvUBJWAJozAw4gjmv1DAVSdKITjXGyDbAolEqSZrBsQ
--- caht id: "0567564b-0a49-4bdc-92ae-d3c82a1aa6a4"
+-- chat id: "0567564b-0a49-4bdc-92ae-d3c82a1aa6a4"
+-- trip id "a2e8011f-0d2b-420e-b960-4f1258b66eca"
+-- deals id "309ccead-2abb-403f-bece-e639a26cf8b0"
+-- request id "009adf9d-c3ad-4b70-81e7-cb5e1a51579f"
+
+-- connection_id 02a4a70a-6c76-4563-9576-6fae91f6bf79
 
 
+
+
+--User 2
+--Id Bearer Bearer  	^eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjI4NWUyNmJiLWFkNzgtNGJhNy05Y2Y4LTA3M2I2YjBhZDgzOCIsImVtYWlsIjoiYWxpY2VAZXhhbXBsZS5jb20iLCJpYXQiOjE3NzY4Njc3NTcsImV4cCI6MTc3NzQ3MjU1N30.jmT6CRDf48rWOcDUSOgtZg8QTJgqDcaR50BlEAIbEBM

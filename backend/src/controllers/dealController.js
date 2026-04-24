@@ -1,4 +1,5 @@
 const dealService = require('../services/dealService');
+console.log('dealService exports:', dealService);
 
 const createDeal = async (req, res, next) => {
   try {

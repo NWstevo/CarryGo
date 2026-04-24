@@ -1,5 +1,8 @@
 const pool = require('../config/db');
 
+/* =========================
+   CREATE CHAT FROM CONNECTION
+========================= */
 const createChatFromConnection = async ({ connection_id, current_user_id }) => {
   const connectionResult = await pool.query(
     'SELECT * FROM connections WHERE id = $1',
@@ -54,7 +57,16 @@ const createChatFromConnection = async ({ connection_id, current_user_id }) => {
   return result.rows[0];
 };
 
-const sendMessage = async ({ chat_id, sender_id, content }) => {
+/* =========================
+   SEND MESSAGE
+========================= */
+const sendMessage = async ({
+  chat_id,
+  sender_id,
+  content,
+  file_url,
+  verification_stage,
+}) => {
   const chatResult = await pool.query(
     'SELECT * FROM chats WHERE id = $1',
     [chat_id]
@@ -73,16 +85,46 @@ const sendMessage = async ({ chat_id, sender_id, content }) => {
     throw new Error('You are not allowed to send messages in this chat');
   }
 
+  if (verification_stage) {
+    const isTraveler = chat.traveler_id === sender_id;
+    const isSender = chat.sender_id === sender_id;
+
+    const rules = {
+      pre_handover: isSender,
+      handover: isSender || isTraveler,
+      delivery: isTraveler,
+      dispute_evidence: isSender || isTraveler,
+    };
+
+    if (!rules[verification_stage]) {
+      throw new Error(`You are not allowed to upload ${verification_stage} evidence`);
+    }
+  }
+
+  const message_type = file_url ? 'image' : 'text';
+
   const result = await pool.query(
-    `INSERT INTO messages (chat_id, sender_id, content)
-     VALUES ($1, $2, $3)
+    `INSERT INTO messages 
+     (chat_id, sender_id, content, file_url, message_type, verification_stage)
+     VALUES ($1, $2, $3, $4, $5, $6)
      RETURNING *`,
-    [chat_id, sender_id, content.trim()]
+    [
+      chat_id,
+      sender_id,
+      content || null,
+      file_url || null,
+      message_type,
+      verification_stage || null,
+    ]
   );
 
   return result.rows[0];
 };
 
+
+/* =========================
+   GET MESSAGES
+========================= */
 const getMessages = async ({ chat_id, current_user_id }) => {
   const chatResult = await pool.query(
     'SELECT * FROM chats WHERE id = $1',
@@ -96,7 +138,8 @@ const getMessages = async ({ chat_id, current_user_id }) => {
   }
 
   const isParticipant =
-    chat.traveler_id === current_user_id || chat.sender_id === current_user_id;
+    chat.traveler_id === current_user_id ||
+    chat.sender_id === current_user_id;
 
   if (!isParticipant) {
     throw new Error('You are not allowed to view messages in this chat');
@@ -114,6 +157,9 @@ const getMessages = async ({ chat_id, current_user_id }) => {
   return result.rows;
 };
 
+/* =========================
+   EXPORTS
+========================= */
 module.exports = {
   createChatFromConnection,
   sendMessage,

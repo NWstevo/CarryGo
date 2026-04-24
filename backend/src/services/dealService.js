@@ -1,5 +1,8 @@
 const pool = require('../config/db');
 
+/* =========================
+   CREATE DEAL
+========================= */
 const createDeal = async ({ connection_id, current_user_id }) => {
   const connectionResult = await pool.query(
     'SELECT * FROM connections WHERE id = $1',
@@ -98,6 +101,9 @@ const createDeal = async ({ connection_id, current_user_id }) => {
   return result.rows[0];
 };
 
+/* =========================
+   GET DEALS
+========================= */
 const getDeals = async () => {
   const result = await pool.query(
     `SELECT deals.*,
@@ -117,6 +123,9 @@ const getDeals = async () => {
   return result.rows;
 };
 
+/* =========================
+   UPDATE DEAL STATUS
+========================= */
 const updateDealStatus = async ({ deal_id, new_status, current_user_id }) => {
   const result = await pool.query(
     'SELECT * FROM deals WHERE id = $1',
@@ -129,11 +138,49 @@ const updateDealStatus = async ({ deal_id, new_status, current_user_id }) => {
     throw new Error('Deal not found');
   }
 
+  const finalStates = ['completed', 'cancelled', 'disputed'];
+
+  if (finalStates.includes(deal.status)) {
+    throw new Error(`Deal is already ${deal.status} and cannot be updated`);
+  }
+
+  if (deal.status === new_status) {
+    throw new Error('Deal is already in this status');
+  }
+
   const isTraveler = deal.traveler_id === current_user_id;
   const isSender = deal.sender_id === current_user_id;
 
   if (!isTraveler && !isSender) {
     throw new Error('You are not allowed to update this deal');
+  }
+
+  const allowedTransitions = {
+    pending: ['agreed', 'cancelled'],
+    agreed: ['in_transit', 'cancelled', 'disputed'],
+    in_transit: ['delivered', 'disputed'],
+    delivered: ['completed', 'disputed'],
+    completed: [],
+    cancelled: [],
+    disputed: []
+  };
+
+  if (!allowedTransitions[deal.status].includes(new_status)) {
+    throw new Error(
+      `Cannot change deal status from ${deal.status} to ${new_status}`
+    );
+  }
+
+  if (new_status === 'in_transit' && !isTraveler) {
+    throw new Error('Only the traveler can mark the deal as in transit');
+  }
+
+  if (new_status === 'delivered' && !isTraveler) {
+    throw new Error('Only the traveler can mark the deal as delivered');
+  }
+
+  if (new_status === 'completed' && !isSender) {
+    throw new Error('Only the sender can confirm completion');
   }
 
   const updatedResult = await pool.query(
@@ -146,6 +193,9 @@ const updateDealStatus = async ({ deal_id, new_status, current_user_id }) => {
 
   const updatedDeal = updatedResult.rows[0];
 
+  /* =========================
+     AUTO-CLOSE OTHER CONNECTIONS
+  ========================= */
   if (new_status === 'completed') {
     if (updatedDeal.trip_id) {
       await pool.query(
@@ -173,6 +223,9 @@ const updateDealStatus = async ({ deal_id, new_status, current_user_id }) => {
   return updatedDeal;
 };
 
+/* =========================
+   EXPORTS
+========================= */
 module.exports = {
   createDeal,
   getDeals,
