@@ -20,13 +20,21 @@ const createChatFromConnection = async (req, res, next) => {
    SEND MESSAGE
 ========================= */
 const sendMessage = async (req, res, next) => {
-  const message = await chatService.sendMessage({
-  chat_id: req.params.chatId,
-  sender_id: req.user.id,
-  content: req.body.content,
-  file_url,
-  verification_stage: req.body.verification_stage,
-});
+  try {
+    const file_url = req.file ? `/${req.file.path.replace(/\\/g, '/')}` : null;
+
+    const message = await chatService.sendMessage({
+      chat_id: req.params.chatId,
+      sender_id: req.user.id,
+      content: req.body.content,
+      file_url,
+      verification_stage: req.body.verification_stage,
+    });
+
+    res.status(201).json(message);
+  } catch (error) {
+    next(error);
+  }
 };
 
 /* =========================
