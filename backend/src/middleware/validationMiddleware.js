@@ -133,43 +133,6 @@ const validateDeal = (req, res, next) => {
   next();
 };
 
-const validateDealStatus = (req, res, next) => {
-  const allowedStatuses = ['agreed', 'in_transit', 'delivered', 'completed', 'cancelled', 'disputed'];
-  const { status } = req.body;
-
-  if (!status || String(status).trim() === '') {
-    return res.status(400).json({ message: 'Status is required' });
-  }
-
-  if (!allowedStatuses.includes(status)) {
-    return res.status(400).json({ message: 'Invalid deal status' });
-  }
-
-  next();
-};
-
-const validateRating = (req, res, next) => {
-  const { deal_id, rated_user_id, score } = req.body;
-
-  if (!deal_id || String(deal_id).trim() === '') {
-    return res.status(400).json({ message: 'Deal ID is required' });
-  }
-
-  if (!rated_user_id || String(rated_user_id).trim() === '') {
-    return res.status(400).json({ message: 'Rated user ID is required' });
-  }
-
-  if (score === undefined || score === null || score === '') {
-    return res.status(400).json({ message: 'Rating score is required' });
-  }
-
-  if (!Number.isInteger(Number(score)) || Number(score) < 1 || Number(score) > 5) {
-    return res.status(400).json({ message: 'Rating score must be an integer between 1 and 5' });
-  }
-
-  next();
-};
-
 const validateMessage = (req, res, next) => {
   const { content } = req.body;
 

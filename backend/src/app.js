@@ -37,7 +37,7 @@ app.get('/', async (req, res) => {
   try {
     const result = await pool.query('SELECT NOW()');
     res.status(200).json({
-      message: 'C2C Baggage API is running',
+      message: 'carrygo_app API is running',
       databaseTime: result.rows[0].now
     });
   } catch (error) {
