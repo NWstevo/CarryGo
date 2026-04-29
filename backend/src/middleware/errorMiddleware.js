@@ -1,7 +1,10 @@
 const errorHandler = (err, req, res, next) => {
-  res.status(400).json({
-    message: err.message || 'Something went wrong'
-  });
+  const statusCode = err.statusCode || (err.name === 'MulterError' ? 400 : 400);
+  const message = err.code === 'LIMIT_FILE_SIZE'
+    ? 'File is too large. Maximum size is 5MB'
+    : err.message || 'Something went wrong';
+
+  res.status(statusCode).json({ message });
 };
 
 module.exports = errorHandler;

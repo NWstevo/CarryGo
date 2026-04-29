@@ -1,4 +1,5 @@
 const chatService = require('../services/chatService');
+const { sanitizeText } = require('../utils/sanitize');
 
 /* =========================
    CREATE CHAT
@@ -21,12 +22,14 @@ const createChatFromConnection = async (req, res, next) => {
 ========================= */
 const sendMessage = async (req, res, next) => {
   try {
-    const file_url = req.file ? `/${req.file.path.replace(/\\/g, '/')}` : null;
+    const file_url = req.file
+      ? `/uploads/chat/${req.file.filename}`
+      : null;
 
     const message = await chatService.sendMessage({
       chat_id: req.params.chatId,
       sender_id: req.user.id,
-      content: req.body.content,
+      content: sanitizeText(req.body.content),
       file_url,
       verification_stage: req.body.verification_stage,
     });

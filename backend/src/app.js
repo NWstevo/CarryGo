@@ -16,7 +16,9 @@ const chatRoutes = require('./routes/chatRoutes');
 const connectionRoutes = require('./routes/connectionRoutes');
 const ratingRoutes = require('./routes/ratingRoutes');
 
-app.use(cors());
+app.use(cors({
+  origin: process.env.FRONTEND_URL || true
+}));
 app.use(express.json());
 
 app.use('/api/auth', authRoutes);
@@ -46,6 +48,24 @@ app.get('/', async (req, res) => {
   }
 });
 
+app.use((req, res) => {
+  res.status(404).json({ message: `Cannot ${req.method} ${req.originalUrl}` });
+});
+app.use((err, req, res, next) => {
+  if (err.code === 'LIMIT_FILE_SIZE') {
+    return res.status(400).json({
+      message: 'File too large. Maximum size is 5MB'
+    });
+  }
+
+  if (err.message === 'Only JPG and PNG image files are allowed') {
+    return res.status(400).json({
+      message: err.message
+    });
+  }
+
+  next(err);
+});
 app.use(errorHandler);
 
 module.exports = app;

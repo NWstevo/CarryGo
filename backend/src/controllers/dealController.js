@@ -1,5 +1,4 @@
 const dealService = require('../services/dealService');
-console.log('dealService exports:', dealService);
 
 const createDeal = async (req, res, next) => {
   try {
@@ -16,7 +15,7 @@ const createDeal = async (req, res, next) => {
 
 const getDeals = async (req, res, next) => {
   try {
-    const deals = await dealService.getDeals();
+    const deals = await dealService.getDeals(req.user.id);
     res.status(200).json(deals);
   } catch (error) {
     next(error);

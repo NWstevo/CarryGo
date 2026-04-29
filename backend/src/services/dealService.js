@@ -104,7 +104,7 @@ const createDeal = async ({ connection_id, current_user_id }) => {
 /* =========================
    GET DEALS
 ========================= */
-const getDeals = async () => {
+const getDeals = async (current_user_id) => {
   const result = await pool.query(
     `SELECT deals.*,
             trips.origin AS trip_origin,
@@ -117,7 +117,9 @@ const getDeals = async () => {
      LEFT JOIN requests ON deals.request_id = requests.id
      JOIN users AS traveler ON deals.traveler_id = traveler.id
      JOIN users AS sender ON deals.sender_id = sender.id
-     ORDER BY deals.created_at DESC`
+     WHERE deals.traveler_id = $1 OR deals.sender_id = $1
+     ORDER BY deals.created_at DESC`,
+    [current_user_id]
   );
 
   return result.rows;
