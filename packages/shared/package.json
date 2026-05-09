@@ -1,0 +1,11 @@
+{
+  "name": "@carrygo/shared",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Shared CarryGo utilities and contracts",
+  "type": "module",
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js"
+  }
+}
