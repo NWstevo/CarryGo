@@ -3,9 +3,13 @@ import { toast } from "sonner";
 export default function ConnectionActions({ connection, onUpdate }) {
   if (connection?.status !== "pending") return null;
 
-  function update(status) {
-    toast.success(`Connection ${status}.`);
-    onUpdate?.({ ...connection, status });
+  async function update(status) {
+    try {
+      await onUpdate?.(connection, status);
+      toast.success(`Connection ${status}.`);
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Could not update connection.");
+    }
   }
 
   return (

@@ -6,17 +6,62 @@ import {
   ShieldCheck,
   Star,
 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import PageHeader from "../../components/common/PageHeader";
 import MetricCard from "../../components/common/MetricCard";
 import StatusChip from "../../components/common/StatusChip";
 import { useAuthStore } from "../auth/auth.store";
-import { connections, deals, requests, trips } from "../../lib/mockData";
+import { connectionsApi } from "../connections/connections.api";
+import { dealsApi } from "../deals/deals.api";
+import { requestsApi } from "../requests/requests.api";
+import { tripsApi } from "../trips/trips.api";
 
 export default function DashboardPage() {
   const user = useAuthStore((state) => state.user);
+  const token = useAuthStore((state) => state.token);
+  const [summary, setSummary] = useState({
+    trips: [],
+    requests: [],
+    connections: [],
+    deals: [],
+  });
 
   const isVerified = user?.verificationStatus === "verified";
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadSummary() {
+      const [tripResult, requestResult] = await Promise.all([
+        tripsApi.list(),
+        requestsApi.list(),
+      ]);
+
+      const authenticatedResults = token
+        ? await Promise.all([connectionsApi.list(), dealsApi.list()])
+        : [{ connections: [] }, { deals: [] }];
+
+      if (!mounted) return;
+
+      setSummary({
+        trips: tripResult.trips,
+        requests: requestResult.requests,
+        connections: authenticatedResults[0].connections,
+        deals: authenticatedResults[1].deals,
+      });
+    }
+
+    loadSummary().catch(() => {
+      if (mounted) {
+        setSummary({ trips: [], requests: [], connections: [], deals: [] });
+      }
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, [token]);
 
   return (
     <main className="page-shell">
@@ -47,9 +92,9 @@ export default function DashboardPage() {
       )}
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <MetricCard label="Available trips" value={trips.length} helper="Verified travelers" icon={Plane} />
-        <MetricCard label="Open requests" value={requests.length} helper="Sender requests" icon={PackageCheck} />
-        <MetricCard label="Connections" value={connections.length} helper="Pending and accepted" icon={Handshake} />
+        <MetricCard label="Available trips" value={summary.trips.length} helper="Verified travelers" icon={Plane} />
+        <MetricCard label="Open requests" value={summary.requests.length} helper="Sender requests" icon={PackageCheck} />
+        <MetricCard label="Connections" value={summary.connections.length} helper="Pending and accepted" icon={Handshake} />
         <MetricCard label="Rating" value={user?.ratingAverage || "New"} helper={`${user?.ratingCount || 0} reviews`} icon={Star} />
       </div>
 
@@ -63,7 +108,7 @@ export default function DashboardPage() {
           </div>
 
           <div className="mt-5 space-y-3">
-            {deals.map((deal) => (
+            {summary.deals.slice(0, 4).map((deal) => (
               <div
                 key={deal.id}
                 className="flex flex-col justify-between gap-3 rounded-2xl border border-slate-100 p-4 md:flex-row md:items-center"
@@ -80,6 +125,12 @@ export default function DashboardPage() {
                 <StatusChip status={deal.status} />
               </div>
             ))}
+
+            {summary.deals.length === 0 && (
+              <p className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-500">
+                No active deals yet.
+              </p>
+            )}
           </div>
         </section>
 
@@ -90,7 +141,7 @@ export default function DashboardPage() {
           </div>
 
           <div className="mt-5 space-y-3">
-            {connections.map((connection) => (
+            {summary.connections.slice(0, 4).map((connection) => (
               <div key={connection.id} className="rounded-2xl bg-slate-50 p-4">
                 <div className="flex items-center justify-between gap-3">
                   <p className="font-medium text-slate-950">
@@ -104,6 +155,12 @@ export default function DashboardPage() {
                 </p>
               </div>
             ))}
+
+            {summary.connections.length === 0 && (
+              <p className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-500">
+                No connection activity yet.
+              </p>
+            )}
           </div>
         </section>
       </div>

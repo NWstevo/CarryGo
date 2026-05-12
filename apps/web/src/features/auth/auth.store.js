@@ -1,14 +1,15 @@
 import { create } from "zustand";
+import { storage } from "../../lib/storage";
+
+const savedSession = storage.get("auth", { user: null, token: null });
 
 export const useAuthStore = create((set) => ({
-  user: {
-    id: "u_001",
-    name: "Amara Johnson",
-    email: "amara@example.com",
-    role: "user",
-    verificationStatus: "verified",
-    ratingAverage: 4.8,
-    ratingCount: 23,
+  user: savedSession.user,
+  token: savedSession.token,
+
+  setSession: ({ user, token }) => {
+    storage.set("auth", { user, token });
+    set({ user, token });
   },
 
   loginAsUser: () =>
@@ -22,6 +23,7 @@ export const useAuthStore = create((set) => ({
         ratingAverage: 4.8,
         ratingCount: 23,
       },
+      token: null,
     }),
 
   loginAsPendingUser: () =>
@@ -35,6 +37,7 @@ export const useAuthStore = create((set) => ({
         ratingAverage: null,
         ratingCount: 0,
       },
+      token: null,
     }),
 
   loginAsAdmin: () =>
@@ -48,7 +51,11 @@ export const useAuthStore = create((set) => ({
         ratingAverage: null,
         ratingCount: 0,
       },
+      token: null,
     }),
 
-  logout: () => set({ user: null }),
+  logout: () => {
+    storage.remove("auth");
+    set({ user: null, token: null });
+  },
 }));

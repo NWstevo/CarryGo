@@ -1,35 +1,43 @@
+import { api } from "../../lib/axios";
+
+function normalizeUser(user = {}) {
+  return {
+    id: user.id,
+    name: user.name || user.full_name || user.email || "CarryGo user",
+    fullName: user.full_name || user.name || "",
+    email: user.email,
+    role: user.role || "user",
+    verificationStatus: user.verification_status || user.verificationStatus || "verified",
+    ratingAverage: user.rating_average ?? user.ratingAverage ?? null,
+    ratingCount: user.rating_count ?? user.ratingCount ?? 0,
+  };
+}
+
 export const authApi = {
   async login(payload) {
+    const { data } = await api.post("/auth/login", payload);
+
     return {
-      token: "mock-token",
-      user: {
-        id: "u_001",
-        name: "Amara Johnson",
-        email: payload.email || "amara@example.com",
-        role: "user",
-        verificationStatus: "verified",
-        ratingAverage: 4.8,
-        ratingCount: 23,
-      },
+      token: data.token,
+      user: normalizeUser(data.user),
     };
   },
 
   async signup(payload) {
-    return {
-      token: "mock-token",
-      user: {
-        id: "u_002",
-        name: payload.name || "Pending User",
-        email: payload.email || "pending@example.com",
-        role: "user",
-        verificationStatus: "pending_verification",
-        ratingAverage: null,
-        ratingCount: 0,
-      },
-    };
+    await api.post("/auth/signup", {
+      full_name: payload.full_name || payload.name,
+      email: payload.email,
+      password: payload.password,
+    });
+
+    return authApi.login({
+      email: payload.email,
+      password: payload.password,
+    });
   },
 
   async me() {
-    return null;
+    const { data } = await api.get("/users/me");
+    return normalizeUser(data.user);
   },
 };

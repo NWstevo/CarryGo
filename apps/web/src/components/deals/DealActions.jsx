@@ -20,10 +20,13 @@ export default function DealActions({ deal, role, onUpdate }) {
 
   if (!actions.length) return null;
 
-  function handleAction(action) {
-    const updated = { ...deal, status: statusMap[action] };
-    toast.success("Deal updated.");
-    onUpdate?.(updated);
+  async function handleAction(action) {
+    try {
+      await onUpdate?.(deal, statusMap[action]);
+      toast.success("Deal updated.");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Could not update deal.");
+    }
   }
 
   return (

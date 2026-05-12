@@ -1,12 +1,20 @@
+import { api } from "../../lib/axios";
+
 export const chatApi = {
   list: async () => ({ chats: [] }),
-  messages: async (connectionId) => ({ connectionId, messages: [] }),
-  sendMessage: async (connectionId, payload) => ({
-    message: {
-      id: crypto.randomUUID(),
-      connectionId,
-      createdAt: new Date().toISOString(),
-      ...payload,
-    },
-  }),
+
+  async createFromConnection(connectionId) {
+    const { data } = await api.post("/chats", { connection_id: connectionId });
+    return { chat: data };
+  },
+
+  async messages(chatId) {
+    const { data } = await api.get(`/chats/${chatId}/messages`);
+    return { chatId, messages: data };
+  },
+
+  async sendMessage(chatId, payload) {
+    const { data } = await api.post(`/chats/${chatId}/messages`, payload);
+    return { message: data };
+  },
 };

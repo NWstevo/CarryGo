@@ -1,10 +1,21 @@
+import { api } from "../../lib/axios";
+
 export const ratingsApi = {
-  list: async () => ({ ratings: [] }),
-  create: async (payload) => ({
-    rating: {
-      id: crypto.randomUUID(),
-      createdAt: new Date().toISOString(),
-      ...payload,
-    },
-  }),
+  async list(userId) {
+    if (!userId) return { ratings: [] };
+
+    const { data } = await api.get(`/ratings/users/${userId}`);
+    return { ratings: data };
+  },
+
+  async create(payload) {
+    const { data } = await api.post("/ratings", {
+      deal_id: payload.deal_id || payload.dealId,
+      rated_user_id: payload.rated_user_id || payload.ratedUserId,
+      score: payload.score,
+      comment: payload.comment,
+    });
+
+    return { rating: data };
+  },
 };

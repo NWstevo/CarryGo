@@ -1,11 +1,40 @@
 import { Link, useNavigate } from "react-router-dom";
 import { PackageCheck } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import Button from "../../components/common/Button";
+import Input from "../../components/common/Input";
+import { authApi } from "./auth.api";
 import { useAuthStore } from "./auth.store";
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const setSession = useAuthStore((state) => state.setSession);
   const loginAsUser = useAuthStore((state) => state.loginAsUser);
   const loginAsAdmin = useAuthStore((state) => state.loginAsAdmin);
+  const [form, setForm] = useState({ email: "", password: "" });
+  const [loading, setLoading] = useState(false);
+
+  function updateField(event) {
+    const { name, value } = event.target;
+    setForm((current) => ({ ...current, [name]: value }));
+  }
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+
+    try {
+      setLoading(true);
+      const session = await authApi.login(form);
+      setSession(session);
+      toast.success("Logged in.");
+      navigate("/dashboard");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Login failed.");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   function handleUserLogin() {
     loginAsUser();
@@ -32,26 +61,38 @@ export default function LoginPage() {
           Log in to manage trips, requests, chats, and deals.
         </p>
 
-        <div className="mt-6 space-y-4">
-          <div>
-            <label className="app-label">Email</label>
-            <input className="app-input mt-1" placeholder="you@example.com" />
-          </div>
+        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+          <Input
+            label="Email"
+            name="email"
+            type="email"
+            placeholder="you@example.com"
+            value={form.email}
+            onChange={updateField}
+            required
+          />
 
-          <div>
-            <label className="app-label">Password</label>
-            <input
-              className="app-input mt-1"
-              placeholder="••••••••"
-              type="password"
-            />
-          </div>
+          <Input
+            label="Password"
+            name="password"
+            placeholder="••••••••"
+            type="password"
+            value={form.password}
+            onChange={updateField}
+            required
+          />
 
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? "Logging in..." : "Log in"}
+          </Button>
+        </form>
+
+        <div className="mt-4 grid gap-3">
           <button
             onClick={handleUserLogin}
-            className="w-full rounded-2xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white hover:bg-blue-700"
+            className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-900 hover:bg-slate-50"
           >
-            Log in as user
+            Demo user login
           </button>
 
           <button
