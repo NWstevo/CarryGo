@@ -5,6 +5,8 @@ const createDeal = async (req, res, next) => {
     const deal = await dealService.createDeal({
       connection_id: req.body.connection_id,
       current_user_id: req.user.id,
+      ip: req.ip,
+      userAgent: req.headers['user-agent'],
     });
 
     res.status(201).json(deal);
@@ -28,6 +30,8 @@ const updateDealStatus = async (req, res, next) => {
       deal_id: req.params.id,
       new_status: req.body.status,
       current_user_id: req.user.id,
+      ip: req.ip,
+      userAgent: req.headers['user-agent'],
     });
 
     res.status(200).json(deal);

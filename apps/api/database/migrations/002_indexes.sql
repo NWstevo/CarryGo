@@ -26,4 +26,4 @@ CREATE INDEX idx_messages_sender_id ON messages(sender_id);
 CREATE INDEX idx_messages_verification_stage ON messages(verification_stage);
 
 CREATE INDEX idx_ratings_deal_id ON ratings(deal_id);
-CREATE INDEX idx_ratings_rated_user_id ON ratings(rated_user_id);touch 
+CREATE INDEX idx_ratings_rated_user_id ON ratings(rated_user_id);

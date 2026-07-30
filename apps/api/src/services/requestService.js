@@ -32,6 +32,7 @@ const getRequests = async () => {
     `SELECT requests.*, users.full_name AS sender_name
      FROM requests
      JOIN users ON requests.sender_id = users.id
+     WHERE requests.status = 'active'
      ORDER BY requests.created_at DESC`
   );
 

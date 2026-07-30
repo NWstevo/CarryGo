@@ -6,6 +6,11 @@ const createTripConnection = async (req, res, next) => {
       trip_id: req.params.tripId,
       initiator_id: req.user.id,
       message: req.body.message,
+      item_category: req.body.item_category,
+      declared_value: req.body.declared_value,
+      item_origin_country: req.body.item_origin_country,
+      ip: req.ip,
+      userAgent: req.headers['user-agent'],
     });
 
     res.status(201).json(connection);
@@ -20,6 +25,11 @@ const createRequestConnection = async (req, res, next) => {
       request_id: req.params.requestId,
       initiator_id: req.user.id,
       message: req.body.message,
+      item_category: req.body.item_category,
+      declared_value: req.body.declared_value,
+      item_origin_country: req.body.item_origin_country,
+      ip: req.ip,
+      userAgent: req.headers['user-agent'],
     });
 
     res.status(201).json(connection);
@@ -52,6 +62,8 @@ const acceptConnection = async (req, res, next) => {
       connection_id: req.params.id,
       user_id: req.user.id,
       new_status: 'accepted',
+      ip: req.ip,
+      userAgent: req.headers['user-agent'],
     });
 
     res.status(200).json(connection);
@@ -66,6 +78,8 @@ const rejectConnection = async (req, res, next) => {
       connection_id: req.params.id,
       user_id: req.user.id,
       new_status: 'rejected',
+      ip: req.ip,
+      userAgent: req.headers['user-agent'],
     });
 
     res.status(200).json(connection);
@@ -80,6 +94,8 @@ const cancelConnection = async (req, res, next) => {
       connection_id: req.params.id,
       user_id: req.user.id,
       new_status: 'cancelled',
+      ip: req.ip,
+      userAgent: req.headers['user-agent'],
     });
 
     res.status(200).json(connection);

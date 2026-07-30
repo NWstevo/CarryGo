@@ -31,6 +31,7 @@ const sendMessage = async (req, res, next) => {
       sender_id: req.user.id,
       content: sanitizeText(req.body.content),
       file_url,
+      file_type: req.file ? req.file.mimetype : null,
       verification_stage: req.body.verification_stage,
     });
 

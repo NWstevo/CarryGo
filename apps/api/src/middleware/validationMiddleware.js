@@ -119,6 +119,30 @@ const validateRequest = (req, res, next) => {
 
   next();
 };
+const validateConnectionDeclaration = (req, res, next) => {
+  const { item_category, declared_value, item_origin_country } = req.body;
+
+  if (!item_category || item_category.trim() === '') {
+    return res.status(400).json({ message: 'Item category is required' });
+  }
+
+  if (declared_value === undefined || declared_value === null || declared_value === '') {
+    return res.status(400).json({ message: 'Declared value is required' });
+  }
+
+  if (isNaN(declared_value) || Number(declared_value) <= 0) {
+    return res.status(400).json({ message: 'Declared value must be a positive number' });
+  }
+
+  if (!item_origin_country || !/^[A-Za-z]{2}$/.test(item_origin_country)) {
+    return res.status(400).json({
+      message: 'Item origin country must be a 2-letter country code',
+    });
+  }
+
+  next();
+};
+
 const validateDeal = (req, res, next) => {
   const { connection_id } = req.body;
 
@@ -190,6 +214,7 @@ module.exports = {
   validateLogin,
   validateTrip,
   validateRequest,
+  validateConnectionDeclaration,
   validateDeal,
   validateMessage,
   validateDealStatus,

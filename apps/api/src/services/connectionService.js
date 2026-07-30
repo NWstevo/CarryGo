@@ -1,7 +1,18 @@
 const pool = require('../config/db');
+const itemCategoryService = require('./itemCategoryService');
+const auditService = require('./auditService');
 
 // Create connection for a trip
-const createTripConnection = async ({ trip_id, initiator_id, message }) => {
+const createTripConnection = async ({
+  trip_id,
+  initiator_id,
+  message,
+  item_category,
+  declared_value,
+  item_origin_country,
+  ip,
+  userAgent,
+}) => {
   const tripResult = await pool.query(
     'SELECT * FROM trips WHERE id = $1',
     [trip_id]
@@ -17,18 +28,43 @@ const createTripConnection = async ({ trip_id, initiator_id, message }) => {
     throw new Error('You cannot connect to your own trip');
   }
 
+  await itemCategoryService.assertCategoryAllowed(item_category);
+
   const result = await pool.query(
-    `INSERT INTO connections (trip_id, initiator_id, receiver_id, initiator_role, receiver_role, message)
-     VALUES ($1, $2, $3, 'sender', 'traveler', $4)
+    `INSERT INTO connections
+     (trip_id, initiator_id, receiver_id, initiator_role, receiver_role, message,
+      item_category, declared_value, item_origin_country)
+     VALUES ($1, $2, $3, 'sender', 'traveler', $4, $5, $6, $7)
      RETURNING *`,
-    [trip_id, initiator_id, trip.traveler_id, message || null]
+    [trip_id, initiator_id, trip.traveler_id, message || null, item_category, declared_value, item_origin_country]
   );
 
-  return result.rows[0];
+  const connection = result.rows[0];
+
+  await auditService.record({
+    entityType: 'connection',
+    entityId: connection.id,
+    event: 'created',
+    actorUserId: initiator_id,
+    ip,
+    userAgent,
+    metadata: { trip_id, item_category, declared_value },
+  });
+
+  return connection;
 };
 
 // Create connection for a request
-const createRequestConnection = async ({ request_id, initiator_id, message }) => {
+const createRequestConnection = async ({
+  request_id,
+  initiator_id,
+  message,
+  item_category,
+  declared_value,
+  item_origin_country,
+  ip,
+  userAgent,
+}) => {
   const requestResult = await pool.query(
     'SELECT * FROM requests WHERE id = $1',
     [request_id]
@@ -44,14 +80,30 @@ const createRequestConnection = async ({ request_id, initiator_id, message }) =>
     throw new Error('You cannot connect to your own request');
   }
 
+  await itemCategoryService.assertCategoryAllowed(item_category);
+
   const result = await pool.query(
-    `INSERT INTO connections (request_id, initiator_id, receiver_id, initiator_role, receiver_role, message)
-     VALUES ($1, $2, $3, 'traveler', 'sender', $4)
+    `INSERT INTO connections
+     (request_id, initiator_id, receiver_id, initiator_role, receiver_role, message,
+      item_category, declared_value, item_origin_country)
+     VALUES ($1, $2, $3, 'traveler', 'sender', $4, $5, $6, $7)
      RETURNING *`,
-    [request_id, initiator_id, request.sender_id, message || null]
+    [request_id, initiator_id, request.sender_id, message || null, item_category, declared_value, item_origin_country]
   );
 
-  return result.rows[0];
+  const connection = result.rows[0];
+
+  await auditService.record({
+    entityType: 'connection',
+    entityId: connection.id,
+    event: 'created',
+    actorUserId: initiator_id,
+    ip,
+    userAgent,
+    metadata: { request_id, item_category, declared_value },
+  });
+
+  return connection;
 };
 
 // Get sent connections
@@ -73,7 +125,7 @@ const getReceivedConnections = async (user_id) => {
 };
 
 // Update status
-const updateConnectionStatus = async ({ connection_id, user_id, new_status }) => {
+const updateConnectionStatus = async ({ connection_id, user_id, new_status, ip, userAgent }) => {
   const result = await pool.query(
     'SELECT * FROM connections WHERE id = $1',
     [connection_id]
@@ -102,15 +154,31 @@ const updateConnectionStatus = async ({ connection_id, user_id, new_status }) =>
     throw new Error('Only pending connections can be updated');
   }
 
+  if (new_status === 'accepted') {
+    // Re-confirm the declared category is still allowed at accept time,
+    // in case the prohibited-items list changed since the connection was created.
+    await itemCategoryService.assertCategoryAllowed(connection.item_category);
+  }
+
   const updated = await pool.query(
-    `UPDATE connections
-     SET status = $1
-     WHERE id = $2
-     RETURNING *`,
+    new_status === 'accepted'
+      ? `UPDATE connections SET status = $1, accept_reconfirmed_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING *`
+      : `UPDATE connections SET status = $1 WHERE id = $2 RETURNING *`,
     [new_status, connection_id]
   );
 
-  return updated.rows[0];
+  const updatedConnection = updated.rows[0];
+
+  await auditService.record({
+    entityType: 'connection',
+    entityId: connection_id,
+    event: new_status,
+    actorUserId: user_id,
+    ip,
+    userAgent,
+  });
+
+  return updatedConnection;
 };
 
 module.exports = {

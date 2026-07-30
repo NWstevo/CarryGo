@@ -45,6 +45,9 @@ export const requestsApi = {
   async offerConnection(requestId, payload = {}) {
     const { data } = await api.post(`/connections/requests/${requestId}`, {
       message: payload.message,
+      item_category: payload.item_category,
+      declared_value: payload.declared_value,
+      item_origin_country: payload.item_origin_country,
     });
 
     return { connection: data };

@@ -23,7 +23,7 @@ export default function HomePage() {
             </div>
 
             <h1 className="max-w-xl text-5xl font-bold tracking-tight text-slate-950 md:text-6xl">
-              Send packages with trusted travelers already going there.
+              Send packages with trusted travelers already going to your destination.
             </h1>
 
             <p className="mt-6 max-w-xl text-lg leading-8 text-slate-600">

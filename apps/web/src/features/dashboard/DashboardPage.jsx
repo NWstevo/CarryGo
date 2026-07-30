@@ -8,10 +8,12 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { toast } from "sonner";
 import PageHeader from "../../components/common/PageHeader";
 import MetricCard from "../../components/common/MetricCard";
 import StatusChip from "../../components/common/StatusChip";
 import { useAuthStore } from "../auth/auth.store";
+import { usersApi } from "../auth/users.api";
 import { connectionsApi } from "../connections/connections.api";
 import { dealsApi } from "../deals/deals.api";
 import { requestsApi } from "../requests/requests.api";
@@ -20,6 +22,21 @@ import { tripsApi } from "../trips/trips.api";
 export default function DashboardPage() {
   const user = useAuthStore((state) => state.user);
   const token = useAuthStore((state) => state.token);
+  const setSession = useAuthStore((state) => state.setSession);
+  const [verifying, setVerifying] = useState(false);
+
+  async function handleVerify() {
+    try {
+      setVerifying(true);
+      const { verificationStatus } = await usersApi.verify();
+      setSession({ user: { ...user, verificationStatus }, token });
+      toast.success("Identity verified.");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Could not verify identity.");
+    } finally {
+      setVerifying(false);
+    }
+  }
   const [summary, setSummary] = useState({
     trips: [],
     requests: [],
@@ -78,7 +95,7 @@ export default function DashboardPage() {
               <ShieldCheck className="h-6 w-6" />
             </div>
 
-            <div>
+            <div className="flex-1">
               <h2 className="font-semibold text-amber-950">
                 Your account is pending verification
               </h2>
@@ -86,6 +103,14 @@ export default function DashboardPage() {
                 You can browse listings, but you cannot create trips, requests,
                 or start connections until CarryGo verifies your account.
               </p>
+
+              <button
+                onClick={handleVerify}
+                disabled={verifying}
+                className="mt-4 rounded-2xl bg-amber-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+              >
+                {verifying ? "Verifying..." : "Verify now"}
+              </button>
             </div>
           </div>
         </div>

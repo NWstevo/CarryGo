@@ -17,7 +17,7 @@ const signup = async ({ full_name, email, password }) => {
   const result = await pool.query(
     `INSERT INTO users (full_name, email, password_hash)
      VALUES ($1, $2, $3)
-     RETURNING id, full_name, email, created_at`,
+     RETURNING id, full_name, email, verification_status, created_at`,
     [full_name, email, password_hash]
   );
 
@@ -55,6 +55,7 @@ const login = async ({ email, password }) => {
       id: user.id,
       full_name: user.full_name,
       email: user.email,
+      verification_status: user.verification_status,
     },
   };
 };

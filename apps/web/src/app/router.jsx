@@ -6,6 +6,8 @@ import AppLayout from "../components/layout/AppLayout";
 import HomePage from "../features/home/HomePage";
 import LoginPage from "../features/auth/LoginPage";
 import SignupPage from "../features/auth/SignupPage";
+import ProtectedRoute from "../features/auth/ProtectedRoute";
+import RoleRoute from "../features/auth/RoleRoute";
 import DashboardPage from "../features/dashboard/DashboardPage";
 
 import TripFeedPage from "../features/trips/TripFeedPage";
@@ -42,63 +44,73 @@ export const router = createBrowserRouter([
     ],
   },
   {
-    element: <AppLayout />,
+    element: <ProtectedRoute />,
     children: [
       {
-        path: "/dashboard",
-        element: <DashboardPage />,
-      },
-      {
-        path: "/trips",
-        element: <TripFeedPage />,
-      },
-      {
-        path: "/trips/new",
-        element: <CreateTripPage />,
-      },
-      {
-        path: "/trips/:tripId",
-        element: <TripDetailPage />,
-      },
-      {
-        path: "/requests",
-        element: <RequestFeedPage />,
-      },
-      {
-        path: "/requests/new",
-        element: <CreateRequestPage />,
-      },
-      {
-        path: "/requests/:requestId",
-        element: <RequestDetailPage />,
-      },
-      {
-        path: "/connections",
-        element: <ConnectionsPage />,
-      },
-      {
-        path: "/chats",
-        element: <ChatPage />,
-      },
-      {
-        path: "/chats/:connectionId",
-        element: <ChatPage />,
-      },
-      {
-        path: "/deals",
-        element: <DealsPage />,
-      },
-      {
-        path: "/ratings",
-        element: <RatingsPage />,
-      },
-      {
-        path: "/admin",
-        element: <AdminDashboardPage />,
-      },
-      {
-        path: "/admin/users",
-        element: <UserModerationPage />,
+        element: <AppLayout />,
+        children: [
+          {
+            path: "/dashboard",
+            element: <DashboardPage />,
+          },
+          {
+            path: "/trips",
+            element: <TripFeedPage />,
+          },
+          {
+            path: "/trips/new",
+            element: <CreateTripPage />,
+          },
+          {
+            path: "/trips/:tripId",
+            element: <TripDetailPage />,
+          },
+          {
+            path: "/requests",
+            element: <RequestFeedPage />,
+          },
+          {
+            path: "/requests/new",
+            element: <CreateRequestPage />,
+          },
+          {
+            path: "/requests/:requestId",
+            element: <RequestDetailPage />,
+          },
+          {
+            path: "/connections",
+            element: <ConnectionsPage />,
+          },
+          {
+            path: "/chats",
+            element: <ChatPage />,
+          },
+          {
+            path: "/chats/:connectionId",
+            element: <ChatPage />,
+          },
+          {
+            path: "/deals",
+            element: <DealsPage />,
+          },
+          {
+            path: "/ratings",
+            element: <RatingsPage />,
+          },
+          {
+            element: <RoleRoute allowedRoles={["admin"]} />,
+            children: [
+              {
+                path: "/admin",
+                element: <AdminDashboardPage />,
+              },
+              {
+                path: "/admin/users",
+                element: <UserModerationPage />,
+              },
+            ],
+          },
+        ],
       },
     ],
   },

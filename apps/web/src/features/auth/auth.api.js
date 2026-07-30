@@ -7,7 +7,7 @@ function normalizeUser(user = {}) {
     fullName: user.full_name || user.name || "",
     email: user.email,
     role: user.role || "user",
-    verificationStatus: user.verification_status || user.verificationStatus || "verified",
+    verificationStatus: user.verification_status || user.verificationStatus || "unverified",
     ratingAverage: user.rating_average ?? user.ratingAverage ?? null,
     ratingCount: user.rating_count ?? user.ratingCount ?? 0,
   };
@@ -38,6 +38,6 @@ export const authApi = {
 
   async me() {
     const { data } = await api.get("/users/me");
-    return normalizeUser(data.user);
+    return normalizeUser(data);
   },
 };

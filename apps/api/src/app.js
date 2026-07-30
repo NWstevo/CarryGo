@@ -17,6 +17,7 @@ const app = express();
 const chatRoutes = require('./routes/chatRoutes');
 const connectionRoutes = require('./routes/connectionRoutes');
 const ratingRoutes = require('./routes/ratingRoutes');
+const itemCategoryRoutes = require('./routes/itemCategoryRoutes');
 
 app.use(helmet());
 
@@ -47,6 +48,7 @@ app.use('/api/chats', chatRoutes);
 app.use('/api/connections', connectionRoutes);
 app.use('/uploads', uploadAccessMiddleware, express.static('uploads'));
 app.use('/api/ratings', ratingRoutes);
+app.use('/api/item-categories', itemCategoryRoutes);
 
 
 

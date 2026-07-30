@@ -1,10 +1,12 @@
-import { PackageOpen } from "lucide-react";
+import { PackageOpen, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import EmptyState from "../../components/common/EmptyState";
 import ErrorState from "../../components/common/ErrorState";
 import PageHeader from "../../components/common/PageHeader";
 import RequestCard from "../../components/requests/RequestCard";
+import TravelerOfferModal from "../../components/requests/TravelerOfferModal";
 import { useAuthStore } from "../auth/auth.store";
 import { requestsApi } from "./requests.api";
 
@@ -13,6 +15,7 @@ export default function RequestFeedPage() {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedRequest, setSelectedRequest] = useState(null);
 
   useEffect(() => {
     let mounted = true;
@@ -34,20 +37,17 @@ export default function RequestFeedPage() {
     };
   }, []);
 
-  async function offerConnection(request) {
+  function openOfferModal(request) {
     if (!token) {
       toast.error("Log in with a real account to offer a connection.");
       return;
     }
 
-    const message = window.prompt("Add a short message for the sender.");
+    setSelectedRequest(request);
+  }
 
-    try {
-      await requestsApi.offerConnection(request.id, { message });
-      toast.success("Offer sent.");
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Could not send offer.");
-    }
+  async function submitOffer(declaration) {
+    await requestsApi.offerConnection(selectedRequest.id, declaration);
   }
 
   return (
@@ -56,6 +56,15 @@ export default function RequestFeedPage() {
         eyebrow="Requests"
         title="Browse package requests"
         description="Find senders looking for verified travelers."
+        action={
+          <Link
+            to="/requests/new"
+            className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white"
+          >
+            <Plus className="h-4 w-4" />
+            New request
+          </Link>
+        }
       />
 
       {loading && <p className="text-sm text-slate-500">Loading requests...</p>}
@@ -76,11 +85,18 @@ export default function RequestFeedPage() {
             <RequestCard
               key={request.id}
               request={request}
-              onOffer={offerConnection}
+              onOffer={openOfferModal}
             />
           ))}
         </div>
       )}
+
+      <TravelerOfferModal
+        request={selectedRequest}
+        open={Boolean(selectedRequest)}
+        onClose={() => setSelectedRequest(null)}
+        onSubmit={submitOffer}
+      />
     </main>
   );
 }

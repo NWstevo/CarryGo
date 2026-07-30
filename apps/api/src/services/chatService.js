@@ -65,6 +65,7 @@ const sendMessage = async ({
   sender_id,
   content,
   file_url,
+  file_type,
   verification_stage,
 }) => {
   const chatResult = await pool.query(
@@ -101,7 +102,11 @@ const sendMessage = async ({
     }
   }
 
-  const message_type = file_url ? 'image' : 'text';
+  let message_type = 'text';
+
+  if (file_url) {
+    message_type = file_type && file_type.startsWith('video/') ? 'video' : 'image';
+  }
 
   const result = await pool.query(
     `INSERT INTO messages 

@@ -1,3 +1,4 @@
+import AuthenticatedAttachment from "./AuthenticatedAttachment";
 import VerificationStageBadge from "./VerificationStageBadge";
 
 export default function MessageBubble({ message, currentUserId }) {
@@ -19,12 +20,8 @@ export default function MessageBubble({ message, currentUserId }) {
           </div>
         )}
 
-        {message.imageUrl && (
-          <img
-            src={message.imageUrl}
-            alt="Attachment"
-            className="mb-2 max-h-64 rounded-2xl object-cover"
-          />
+        {message.filePath && (
+          <AuthenticatedAttachment path={message.filePath} kind={message.fileKind} />
         )}
 
         {message.text && <p>{message.text}</p>}

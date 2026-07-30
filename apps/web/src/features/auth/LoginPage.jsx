@@ -10,8 +10,6 @@ import { useAuthStore } from "./auth.store";
 export default function LoginPage() {
   const navigate = useNavigate();
   const setSession = useAuthStore((state) => state.setSession);
-  const loginAsUser = useAuthStore((state) => state.loginAsUser);
-  const loginAsAdmin = useAuthStore((state) => state.loginAsAdmin);
   const [form, setForm] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
 
@@ -34,16 +32,6 @@ export default function LoginPage() {
     } finally {
       setLoading(false);
     }
-  }
-
-  function handleUserLogin() {
-    loginAsUser();
-    navigate("/dashboard");
-  }
-
-  function handleAdminLogin() {
-    loginAsAdmin();
-    navigate("/admin");
   }
 
   return (
@@ -86,22 +74,6 @@ export default function LoginPage() {
             {loading ? "Logging in..." : "Log in"}
           </Button>
         </form>
-
-        <div className="mt-4 grid gap-3">
-          <button
-            onClick={handleUserLogin}
-            className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-900 hover:bg-slate-50"
-          >
-            Demo user login
-          </button>
-
-          <button
-            onClick={handleAdminLogin}
-            className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-900 hover:bg-slate-50"
-          >
-            Demo admin login
-          </button>
-        </div>
 
         <p className="mt-6 text-center text-sm text-slate-500">
           No account?{" "}

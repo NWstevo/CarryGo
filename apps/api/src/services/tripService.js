@@ -34,6 +34,7 @@ const getTrips = async () => {
     `SELECT trips.*, users.full_name AS traveler_name
      FROM trips
      JOIN users ON trips.traveler_id = users.id
+     WHERE trips.status = 'active'
      ORDER BY trips.created_at DESC`
   );
 

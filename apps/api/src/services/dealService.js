@@ -1,9 +1,10 @@
 const pool = require('../config/db');
+const auditService = require('./auditService');
 
 /* =========================
    CREATE DEAL
 ========================= */
-const createDeal = async ({ connection_id, current_user_id }) => {
+const createDeal = async ({ connection_id, current_user_id, ip, userAgent }) => {
   const connectionResult = await pool.query(
     'SELECT * FROM connections WHERE id = $1',
     [connection_id]
@@ -91,14 +92,89 @@ const createDeal = async ({ connection_id, current_user_id }) => {
     throw new Error('You cannot create a deal with yourself');
   }
 
-  const result = await pool.query(
-    `INSERT INTO deals (connection_id, trip_id, request_id, traveler_id, sender_id, status)
-     VALUES ($1, $2, $3, $4, $5, $6)
-     RETURNING *`,
-    [connection_id, trip_id, request_id, traveler_id, sender_id, 'pending']
-  );
+  const client = await pool.connect();
 
-  return result.rows[0];
+  try {
+    await client.query('BEGIN');
+
+    const result = await client.query(
+      `INSERT INTO deals (connection_id, trip_id, request_id, traveler_id, sender_id, status)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING *`,
+      [connection_id, trip_id, request_id, traveler_id, sender_id, 'pending']
+    );
+
+    const deal = result.rows[0];
+
+    // Close the ad now that the parties have committed to a deal
+    if (trip_id) {
+      const tripUpdate = await client.query(
+        `UPDATE trips SET status = 'booked' WHERE id = $1 AND status = 'active' RETURNING id`,
+        [trip_id]
+      );
+
+      if (tripUpdate.rows.length === 0) {
+        throw new Error('This trip is no longer available');
+      }
+    }
+
+    if (request_id) {
+      const requestUpdate = await client.query(
+        `UPDATE requests SET status = 'booked' WHERE id = $1 AND status = 'active' RETURNING id`,
+        [request_id]
+      );
+
+      if (requestUpdate.rows.length === 0) {
+        throw new Error('This request is no longer available');
+      }
+    }
+
+    // Any other sender/traveler still pending on the same ad is resolved out
+    const closedConnections = await client.query(
+      `UPDATE connections
+       SET status = 'cancelled_due_to_listing_closure'
+       WHERE (trip_id = $1 OR request_id = $2)
+         AND id <> $3
+         AND status = 'pending'
+       RETURNING id`,
+      [trip_id, request_id, connection_id]
+    );
+
+    for (const row of closedConnections.rows) {
+      await auditService.record(
+        {
+          entityType: 'connection',
+          entityId: row.id,
+          event: 'cancelled_due_to_listing_closure',
+          actorUserId: null,
+          metadata: { closed_by_deal_id: deal.id },
+        },
+        client
+      );
+    }
+
+    await auditService.record(
+      {
+        entityType: 'deal',
+        entityId: deal.id,
+        event: 'created',
+        actorUserId: current_user_id,
+        ip,
+        userAgent,
+        metadata: { connection_id, trip_id, request_id },
+      },
+      client
+    );
+
+    await client.query('COMMIT');
+
+    return deal;
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
 };
 
 /* =========================
@@ -128,7 +204,7 @@ const getDeals = async (current_user_id) => {
 /* =========================
    UPDATE DEAL STATUS
 ========================= */
-const updateDealStatus = async ({ deal_id, new_status, current_user_id }) => {
+const updateDealStatus = async ({ deal_id, new_status, current_user_id, ip, userAgent }) => {
   const result = await pool.query(
     'SELECT * FROM deals WHERE id = $1',
     [deal_id]
@@ -195,29 +271,31 @@ const updateDealStatus = async ({ deal_id, new_status, current_user_id }) => {
 
   const updatedDeal = updatedResult.rows[0];
 
+  await auditService.record({
+    entityType: 'deal',
+    entityId: deal_id,
+    event: 'status_updated',
+    actorUserId: current_user_id,
+    ip,
+    userAgent,
+    metadata: { from: deal.status, to: new_status },
+  });
+
   /* =========================
-     AUTO-CLOSE OTHER CONNECTIONS
+     REOPEN THE AD IF THE DEAL FELL THROUGH
   ========================= */
-  if (new_status === 'completed') {
+  if (new_status === 'cancelled') {
     if (updatedDeal.trip_id) {
       await pool.query(
-        `UPDATE connections
-         SET status = 'cancelled_due_to_listing_closure'
-         WHERE trip_id = $1
-           AND id <> $2
-           AND status IN ('pending', 'accepted')`,
-        [updatedDeal.trip_id, updatedDeal.connection_id]
+        `UPDATE trips SET status = 'active' WHERE id = $1`,
+        [updatedDeal.trip_id]
       );
     }
 
     if (updatedDeal.request_id) {
       await pool.query(
-        `UPDATE connections
-         SET status = 'cancelled_due_to_listing_closure'
-         WHERE request_id = $1
-           AND id <> $2
-           AND status IN ('pending', 'accepted')`,
-        [updatedDeal.request_id, updatedDeal.connection_id]
+        `UPDATE requests SET status = 'active' WHERE id = $1`,
+        [updatedDeal.request_id]
       );
     }
   }
