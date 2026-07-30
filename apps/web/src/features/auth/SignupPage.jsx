@@ -6,6 +6,7 @@ import Button from "../../components/common/Button";
 import Input from "../../components/common/Input";
 import { authApi } from "./auth.api";
 import { useAuthStore } from "./auth.store";
+import GoogleAuthButton from "./GoogleAuthButton";
 
 export default function SignupPage() {
   const navigate = useNavigate();
@@ -15,6 +16,7 @@ export default function SignupPage() {
     email: "",
     password: "",
   });
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [loading, setLoading] = useState(false);
 
   function updateField(event) {
@@ -25,9 +27,14 @@ export default function SignupPage() {
   async function handleSubmit(event) {
     event.preventDefault();
 
+    if (!termsAccepted) {
+      toast.error("You must accept the Terms of Service and Privacy Policy to sign up.");
+      return;
+    }
+
     try {
       setLoading(true);
-      const session = await authApi.signup(form);
+      const session = await authApi.signup({ ...form, terms_accepted: termsAccepted });
       setSession(session);
       toast.success("Account created.");
       navigate("/dashboard");
@@ -46,7 +53,38 @@ export default function SignupPage() {
           Start sending or carrying packages safely.
         </p>
 
-        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+        <label className="mt-6 flex items-start gap-2 text-sm text-slate-600">
+          <input
+            type="checkbox"
+            checked={termsAccepted}
+            onChange={(e) => setTermsAccepted(e.target.checked)}
+            className="mt-0.5 h-4 w-4 rounded border-slate-300"
+            required
+          />
+          <span>
+            I agree to the{" "}
+            <Link to="/terms" target="_blank" className="font-semibold text-blue-600">
+              Terms of Service
+            </Link>{" "}
+            and{" "}
+            <Link to="/privacy" target="_blank" className="font-semibold text-blue-600">
+              Privacy Policy
+            </Link>
+            .
+          </span>
+        </label>
+
+        <div className="mt-4">
+          <GoogleAuthButton termsAccepted={termsAccepted} />
+        </div>
+
+        <div className="my-6 flex items-center gap-3 text-xs font-medium uppercase text-slate-400">
+          <div className="h-px flex-1 bg-slate-200" />
+          or
+          <div className="h-px flex-1 bg-slate-200" />
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
           <Input
             name="full_name"
             placeholder="Full name"
@@ -71,7 +109,7 @@ export default function SignupPage() {
             required
           />
 
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button type="submit" className="w-full" disabled={loading || !termsAccepted}>
             {loading ? "Creating..." : "Create account"}
           </Button>
         </form>

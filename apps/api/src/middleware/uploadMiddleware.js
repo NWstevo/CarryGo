@@ -2,9 +2,11 @@ const multer = require('multer');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 
+const UPLOADS_DIR = process.env.UPLOADS_DIR || 'uploads';
+
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, 'uploads/chat');
+    cb(null, path.join(UPLOADS_DIR, 'chat'));
   },
 
   filename: function (req, file, cb) {

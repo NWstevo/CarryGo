@@ -1,5 +1,6 @@
 import { MessageCircle } from "lucide-react";
 import { Link } from "react-router-dom";
+import Badge from "../common/Badge";
 import StatusChip from "../common/StatusChip";
 import ConnectionActions from "./ConnectionActions";
 
@@ -11,8 +12,11 @@ export default function ConnectionCard({ connection, onUpdate }) {
           <h2 className="text-lg font-semibold text-slate-950">
             {connection.listingTitle}
           </h2>
-          <p className="mt-1 text-sm text-slate-500">
-            From {connection.otherUser?.name || connection.otherUser}
+          <p className="mt-1 flex items-center gap-2 text-sm text-slate-500">
+            {connection.otherUser?.name}
+            {connection.otherUser?.roleLabel && (
+              <Badge variant="blue">{connection.otherUser.roleLabel}</Badge>
+            )}
           </p>
         </div>
 

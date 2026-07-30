@@ -46,7 +46,7 @@ app.use('/api/requests', requestRoutes);
 app.use('/api/deals', dealRoutes);
 app.use('/api/chats', chatRoutes);
 app.use('/api/connections', connectionRoutes);
-app.use('/uploads', uploadAccessMiddleware, express.static('uploads'));
+app.use('/uploads', uploadAccessMiddleware, express.static(process.env.UPLOADS_DIR || 'uploads'));
 app.use('/api/ratings', ratingRoutes);
 app.use('/api/item-categories', itemCategoryRoutes);
 

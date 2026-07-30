@@ -109,7 +109,14 @@ const createRequestConnection = async ({
 // Get sent connections
 const getSentConnections = async (user_id) => {
   const result = await pool.query(
-    'SELECT * FROM connections WHERE initiator_id = $1 ORDER BY created_at DESC',
+    `SELECT connections.*,
+            initiator.full_name AS initiator_name,
+            receiver.full_name AS receiver_name
+     FROM connections
+     JOIN users AS initiator ON connections.initiator_id = initiator.id
+     JOIN users AS receiver ON connections.receiver_id = receiver.id
+     WHERE connections.initiator_id = $1
+     ORDER BY connections.created_at DESC`,
     [user_id]
   );
   return result.rows;
@@ -118,7 +125,14 @@ const getSentConnections = async (user_id) => {
 // Get received connections
 const getReceivedConnections = async (user_id) => {
   const result = await pool.query(
-    'SELECT * FROM connections WHERE receiver_id = $1 ORDER BY created_at DESC',
+    `SELECT connections.*,
+            initiator.full_name AS initiator_name,
+            receiver.full_name AS receiver_name
+     FROM connections
+     JOIN users AS initiator ON connections.initiator_id = initiator.id
+     JOIN users AS receiver ON connections.receiver_id = receiver.id
+     WHERE connections.receiver_id = $1
+     ORDER BY connections.created_at DESC`,
     [user_id]
   );
   return result.rows;
@@ -160,11 +174,22 @@ const updateConnectionStatus = async ({ connection_id, user_id, new_status, ip, 
     await itemCategoryService.assertCategoryAllowed(connection.item_category);
   }
 
-  const updated = await pool.query(
+  await pool.query(
     new_status === 'accepted'
-      ? `UPDATE connections SET status = $1, accept_reconfirmed_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING *`
-      : `UPDATE connections SET status = $1 WHERE id = $2 RETURNING *`,
+      ? `UPDATE connections SET status = $1, accept_reconfirmed_at = CURRENT_TIMESTAMP WHERE id = $2`
+      : `UPDATE connections SET status = $1 WHERE id = $2`,
     [new_status, connection_id]
+  );
+
+  const updated = await pool.query(
+    `SELECT connections.*,
+            initiator.full_name AS initiator_name,
+            receiver.full_name AS receiver_name
+     FROM connections
+     JOIN users AS initiator ON connections.initiator_id = initiator.id
+     JOIN users AS receiver ON connections.receiver_id = receiver.id
+     WHERE connections.id = $1`,
+    [connection_id]
   );
 
   const updatedConnection = updated.rows[0];

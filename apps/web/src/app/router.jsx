@@ -24,6 +24,8 @@ import DealsPage from "../features/deals/DealsPage";
 import RatingsPage from "../features/ratings/RatingsPage";
 import AdminDashboardPage from "../features/admin/AdminDashboardPage";
 import UserModerationPage from "../features/admin/UserModerationPage";
+import TermsPage from "../features/legal/TermsPage";
+import PrivacyPage from "../features/legal/PrivacyPage";
 
 export const router = createBrowserRouter([
   {
@@ -40,6 +42,14 @@ export const router = createBrowserRouter([
       {
         path: "/signup",
         element: <SignupPage />,
+      },
+      {
+        path: "/terms",
+        element: <TermsPage />,
+      },
+      {
+        path: "/privacy",
+        element: <PrivacyPage />,
       },
     ],
   },

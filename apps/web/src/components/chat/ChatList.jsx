@@ -1,4 +1,5 @@
 import Avatar from "../common/Avatar";
+import Badge from "../common/Badge";
 
 export default function ChatList({ chats = [], activeId, onSelect }) {
   return (
@@ -14,7 +15,12 @@ export default function ChatList({ chats = [], activeId, onSelect }) {
         >
           <Avatar name={chat.otherUser?.name || "User"} />
           <div>
-            <p className="font-medium text-slate-950">{chat.otherUser?.name}</p>
+            <p className="flex items-center gap-2 font-medium text-slate-950">
+              {chat.otherUser?.name}
+              {chat.otherUser?.roleLabel && (
+                <Badge variant="blue">{chat.otherUser.roleLabel}</Badge>
+              )}
+            </p>
             <p className="text-sm text-slate-500">{chat.status || "Accepted connection"}</p>
           </div>
         </button>

@@ -5,7 +5,7 @@ const {
 } = require('../utils/validators');
 
 const validateSignup = (req, res, next) => {
-  const { full_name, email, password } = req.body;
+  const { full_name, email, password, terms_accepted } = req.body;
 
   if (!full_name || full_name.trim() === '') {
     return res.status(400).json({ message: 'Full name is required' });
@@ -29,6 +29,22 @@ if (!isStrongPassword(password)) {
     message: 'Password must be at least 8 characters and include uppercase, lowercase, and a number'
   });
 }
+
+  if (terms_accepted !== true) {
+    return res.status(400).json({
+      message: 'You must accept the Terms of Service and Privacy Policy to sign up',
+    });
+  }
+
+  next();
+};
+
+const validateGoogleAuth = (req, res, next) => {
+  const { credential } = req.body;
+
+  if (!credential || credential.trim() === '') {
+    return res.status(400).json({ message: 'Google credential is required' });
+  }
 
   next();
 };
@@ -212,6 +228,7 @@ const validateRating = (req, res, next) => {
 module.exports = {
   validateSignup,
   validateLogin,
+  validateGoogleAuth,
   validateTrip,
   validateRequest,
   validateConnectionDeclaration,

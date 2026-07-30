@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Send } from "lucide-react";
+import Badge from "../common/Badge";
 import MessageBubble from "./MessageBubble";
 import UploadPanel from "./UploadPanel";
 
@@ -35,8 +36,11 @@ export default function ChatWindow({
   return (
     <section className="flex min-h-[600px] flex-col bg-slate-50">
       <header className="border-b border-slate-200 bg-white p-4">
-        <h2 className="font-semibold text-slate-950">
+        <h2 className="flex items-center gap-2 font-semibold text-slate-950">
           {connection?.otherUser?.name || "Conversation"}
+          {connection?.otherUser?.roleLabel && (
+            <Badge variant="blue">{connection.otherUser.roleLabel}</Badge>
+          )}
         </h2>
         <p className="text-sm text-green-700">Chat unlocked · You are {role}</p>
       </header>

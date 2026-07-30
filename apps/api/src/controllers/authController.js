@@ -18,4 +18,13 @@ const login = async (req, res, next) => {
   }
 };
 
-module.exports = { signup, login };
+const googleAuth = async (req, res, next) => {
+  try {
+    const result = await authService.loginWithGoogle(req.body);
+    res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = { signup, login, googleAuth };

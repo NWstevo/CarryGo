@@ -6,6 +6,7 @@ import Button from "../../components/common/Button";
 import Input from "../../components/common/Input";
 import { authApi } from "./auth.api";
 import { useAuthStore } from "./auth.store";
+import GoogleAuthButton from "./GoogleAuthButton";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -49,7 +50,17 @@ export default function LoginPage() {
           Log in to manage trips, requests, chats, and deals.
         </p>
 
-        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+        <div className="mt-6">
+          <GoogleAuthButton />
+        </div>
+
+        <div className="my-6 flex items-center gap-3 text-xs font-medium uppercase text-slate-400">
+          <div className="h-px flex-1 bg-slate-200" />
+          or
+          <div className="h-px flex-1 bg-slate-200" />
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
           <Input
             label="Email"
             name="email"

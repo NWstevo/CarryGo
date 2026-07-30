@@ -9,6 +9,7 @@ import {
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
+import Badge from "../../components/common/Badge";
 import PageHeader from "../../components/common/PageHeader";
 import MetricCard from "../../components/common/MetricCard";
 import StatusChip from "../../components/common/StatusChip";
@@ -169,8 +170,11 @@ export default function DashboardPage() {
             {summary.connections.slice(0, 4).map((connection) => (
               <div key={connection.id} className="rounded-2xl bg-slate-50 p-4">
                 <div className="flex items-center justify-between gap-3">
-                  <p className="font-medium text-slate-950">
-                    {connection.otherUser?.name || connection.otherUser}
+                  <p className="flex items-center gap-2 font-medium text-slate-950">
+                    {connection.otherUser?.name}
+                    {connection.otherUser?.roleLabel && (
+                      <Badge variant="blue">{connection.otherUser.roleLabel}</Badge>
+                    )}
                   </p>
                   <StatusChip status={connection.status} />
                 </div>

@@ -1,19 +1,29 @@
 import { api } from "../../lib/axios";
 
+const ROLE_LABELS = {
+  sender: "Sender",
+  traveler: "Traveler",
+};
+
 function normalizeConnection(connection = {}, direction = "sent") {
   const listingTitle = connection.trip_id
     ? `Trip connection ${connection.trip_id.slice(0, 8)}`
     : `Request connection ${connection.request_id?.slice(0, 8) || ""}`;
 
+  const otherRole = direction === "sent" ? connection.receiver_role : connection.initiator_role;
+  const myRole = direction === "sent" ? connection.initiator_role : connection.receiver_role;
+
   return {
     ...connection,
     direction,
     listingTitle,
+    myRole,
     otherUser: {
       name:
-        direction === "sent"
-          ? `Receiver ${connection.receiver_id?.slice(0, 8) || ""}`
-          : `Sender ${connection.initiator_id?.slice(0, 8) || ""}`,
+        (direction === "sent" ? connection.receiver_name : connection.initiator_name) ||
+        "CarryGo user",
+      role: otherRole,
+      roleLabel: ROLE_LABELS[otherRole] || otherRole,
     },
   };
 }

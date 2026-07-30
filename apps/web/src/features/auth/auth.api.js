@@ -28,6 +28,7 @@ export const authApi = {
       full_name: payload.full_name || payload.name,
       email: payload.email,
       password: payload.password,
+      terms_accepted: payload.terms_accepted,
     });
 
     return authApi.login({
@@ -39,5 +40,17 @@ export const authApi = {
   async me() {
     const { data } = await api.get("/users/me");
     return normalizeUser(data);
+  },
+
+  async google(credential, termsAccepted) {
+    const { data } = await api.post("/auth/google", {
+      credential,
+      terms_accepted: termsAccepted,
+    });
+
+    return {
+      token: data.token,
+      user: normalizeUser(data.user),
+    };
   },
 };

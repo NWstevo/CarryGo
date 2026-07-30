@@ -47,6 +47,20 @@ export default function PublicLayout() {
       </header>
 
       <Outlet />
+
+      <footer className="border-t border-slate-100 py-8">
+        <div className="mx-auto flex max-w-7xl flex-col items-center gap-2 px-4 text-sm text-slate-500 sm:flex-row sm:justify-between sm:px-6 lg:px-8">
+          <p>&copy; {new Date().getFullYear()} CarryGo</p>
+          <div className="flex gap-4">
+            <Link to="/terms" className="hover:text-slate-950">
+              Terms of Service
+            </Link>
+            <Link to="/privacy" className="hover:text-slate-950">
+              Privacy Policy
+            </Link>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
